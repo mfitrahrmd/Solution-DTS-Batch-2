@@ -25,6 +25,50 @@ public class Program
         }
     }
 
+    /* Transactional command wrapper
+    so that the transaction functionality can be reused */
+    // Returning row affected
+    private static int WithTx(Func<SqlCommand, SqlCommand> command)
+    {
+        _sqlConnection = new(_connectionString);
+
+        _sqlConnection.Open();
+
+        var sqlTransaction = _sqlConnection.BeginTransaction();
+
+        int rowAffected = 0;
+        try
+        {
+            SqlCommand sqlCommand = new();
+
+            var cmd = command(sqlCommand); // here is the main command, where the 'command' parameter passed
+
+            /* connection & transaction assignment after calling the callback 'command' function
+            so that the callback function cannot messed up with the connection & transaction */
+            cmd.Connection = _sqlConnection;
+            cmd.Transaction = sqlTransaction;
+
+            rowAffected = cmd.ExecuteNonQuery();
+
+            sqlTransaction.Commit();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+
+            try
+            {
+                sqlTransaction.Rollback();
+            }
+            catch (Exception r)
+            {
+                Console.WriteLine(r.Message);
+            }
+        }
+
+        return rowAffected;
+    }
+
     // GetAllRegion (command)
     public static void GetAllRegion()
     {
@@ -63,32 +107,20 @@ public class Program
     // InsertRegion (transaction)
     public static void InsertRegion(string name)
     {
-        _sqlConnection = new(_connectionString);
-        
-        _sqlConnection.Open();
-
-        var sqlTransaction = _sqlConnection.BeginTransaction();
         try
         {
-            SqlCommand sqlCommand = new()
+            var rowAffected = WithTx(command =>
             {
-                Connection = _sqlConnection,
-                CommandText = "INSERT INTO region (name) VALUES (@name)",
-                Transaction = sqlTransaction
-            };
-
-            SqlParameter sqlParameter = new()
-            {
-                ParameterName = "@name",
-                Value = name,
-                SqlDbType = SqlDbType.VarChar
-            };
-
-            sqlCommand.Parameters.Add(sqlParameter);
-
-            var rowAffected = sqlCommand.ExecuteNonQuery();
-            
-            sqlTransaction.Commit();
+                command.CommandText = "INSERT INTO region (name) VALUES (@name)";
+                command.Parameters.Add(new SqlParameter
+                {
+                    ParameterName = "@name",
+                    Value = name,
+                    SqlDbType = SqlDbType.VarChar
+                });
+                
+                return command;
+            });
 
             if (rowAffected > 0)
             {
@@ -102,15 +134,6 @@ public class Program
         catch (Exception e)
         {
             Console.WriteLine(e.Message);
-
-            try
-            {
-                sqlTransaction.Rollback();
-            }
-            catch (Exception r)
-            {
-                Console.WriteLine(r.Message);
-            }
         }
     }
 
