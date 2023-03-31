@@ -19,6 +19,7 @@ public class Program
             InsertRegion("Wakanda");
             GetAllRegion();
             GetById(1);
+            UpdateById(5, "Konoha");
         }
         catch (Exception e)
         {
@@ -189,6 +190,40 @@ public class Program
         }
     }
 
-    // TODO : Update Region (transaction)
+    // UpdateByIdRegion (transaction)
+    public static void UpdateById(int id, string name)
+    {
+        try
+        {
+            var rowAffected = WithTx(command =>
+            {
+                command.CommandText = "UPDATE region SET name = @name WHERE id = @id";
+                command.Parameters.AddRange(new []
+                {
+                    new SqlParameter
+                    {
+                        ParameterName = "@name",
+                        Value = name,
+                        SqlDbType = SqlDbType.VarChar
+                    },
+                    new SqlParameter
+                    {
+                        ParameterName = "@id",
+                        Value = id,
+                        SqlDbType = SqlDbType.Int
+                    }
+                });
+            
+                return command;
+            });
+
+            Console.WriteLine(rowAffected > 0 ? "Region successfully updated!" : "Failed to update region!");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+    
     // TODO : Delete Region (transaction)
 }
