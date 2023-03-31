@@ -20,6 +20,7 @@ public class Program
             GetAllRegion();
             GetById(1);
             UpdateById(5, "Konoha");
+            DeleteById(5);
         }
         catch (Exception e)
         {
@@ -75,7 +76,7 @@ public class Program
     public static void GetAllRegion()
     {
         _sqlConnection = new(_connectionString);
-        
+
         _sqlConnection.Open();
 
         SqlCommand sqlCommand = new()
@@ -120,7 +121,7 @@ public class Program
                     Value = name,
                     SqlDbType = SqlDbType.VarChar
                 });
-                
+
                 return command;
             });
 
@@ -191,7 +192,7 @@ public class Program
             var rowAffected = WithTx(command =>
             {
                 command.CommandText = "UPDATE region SET name = @name WHERE id = @id";
-                command.Parameters.AddRange(new []
+                command.Parameters.AddRange(new[]
                 {
                     new SqlParameter
                     {
@@ -206,7 +207,7 @@ public class Program
                         SqlDbType = SqlDbType.Int
                     }
                 });
-            
+
                 return command;
             });
 
@@ -217,6 +218,30 @@ public class Program
             Console.WriteLine(e.Message);
         }
     }
-    
-    // TODO : Delete Region (transaction)
+
+    // DeleteByIdRegion (transaction)
+    public static void DeleteById(int id)
+    {
+        try
+        {
+            var rowAffected = WithTx(command =>
+            {
+                command.CommandText = "DELETE FROM region WHERE id=@id";
+                command.Parameters.Add(new SqlParameter
+                {
+                    ParameterName = "@id",
+                    Value = id,
+                    SqlDbType = SqlDbType.Int
+                });
+
+                return command;
+            });
+
+            Console.WriteLine(rowAffected > 0 ? "Region successfully deleted!" : "Failed to delete region!");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
 }
