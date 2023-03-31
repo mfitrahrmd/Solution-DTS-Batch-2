@@ -124,14 +124,7 @@ public class Program
                 return command;
             });
 
-            if (rowAffected > 0)
-            {
-                Console.WriteLine("Region successfully added!");
-            }
-            else
-            {
-                Console.WriteLine("Failed to add region!");
-            }
+            Console.WriteLine(rowAffected > 0 ? "Region successfully added!" : "Failed to add region!");
         }
         catch (Exception e)
         {
