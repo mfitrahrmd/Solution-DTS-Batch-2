@@ -18,6 +18,7 @@ public class Program
         {
             InsertRegion("Wakanda");
             GetAllRegion();
+            GetById(1);
         }
         catch (Exception e)
         {
@@ -137,7 +138,57 @@ public class Program
         }
     }
 
-    // TODO : GetById Region (command)
+    // GetByIdRegion (command)
+    public static void GetById(int id)
+    {
+        _sqlConnection = new(_connectionString);
+
+        _sqlConnection.Open();
+
+        try
+        {
+            SqlCommand sqlCommand = new()
+            {
+                Connection = _sqlConnection,
+                CommandText = "SELECT * FROM region WHERE id = @id",
+            };
+
+            SqlParameter sqlParameter = new()
+            {
+                ParameterName = "@id",
+                Value = id,
+                SqlDbType = SqlDbType.Int
+            };
+
+            sqlCommand.Parameters.Add(sqlParameter);
+
+            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
+            {
+                if (sqlDataReader.HasRows)
+                {
+                    while (sqlDataReader.Read())
+                    {
+                        Console.WriteLine("====================");
+                        Console.WriteLine($"Id : {sqlDataReader[0]}");
+                        Console.WriteLine($"Name : {sqlDataReader[1]}");
+                        Console.WriteLine("====================");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Data not found!");
+                }
+
+                sqlDataReader.Close();
+                _sqlConnection.Close();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
     // TODO : Update Region (transaction)
     // TODO : Delete Region (transaction)
 }
